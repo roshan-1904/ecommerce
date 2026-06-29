@@ -12,6 +12,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
   const [companyName, setCompanyName] = useState('');
   const [mobile, setMobile] = useState('');
   const [otp, setOtp] = useState('');
+  const [devOtp, setDevOtp] = useState('');
   
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,6 +57,9 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
           onClose();
           resetForm();
         } else {
+          if (result.otp) {
+            setDevOtp(result.otp);
+          }
           setActiveTab('otp-verification');
           setOtp('');
         }
@@ -175,6 +179,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
     setCompanyName('');
     setMobile('');
     setOtp('');
+    setDevOtp('');
     setErrorMessage('');
   };
 
@@ -438,6 +443,22 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
                       We have sent a verification code to:<br/>
                       <strong style={{ color: 'var(--text-primary)', fontSize: '14px' }}>{email}</strong>
                     </label>
+                    {devOtp && (
+                      <div style={{
+                        margin: '10px 0 18px 0',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        background: 'rgba(99, 102, 241, 0.1)',
+                        border: '1px solid rgba(99, 102, 241, 0.3)',
+                        color: 'var(--primary)',
+                        fontSize: '13px',
+                        fontWeight: 'bold',
+                        lineHeight: '1.4'
+                      }}>
+                        💡 <strong>[Development Mode]</strong><br/>
+                        Your verification OTP is: <span style={{ textDecoration: 'underline', color: 'var(--text-primary)', letterSpacing: '1px' }}>{devOtp}</span>
+                      </div>
+                    )}
                     <input 
                       type="text" 
                       maxLength="6"

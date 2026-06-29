@@ -465,6 +465,11 @@ export const registerOtp = async (req, res, next) => {
       registrationData: { name, email, mobile, password, location, companyName }
     });
 
+    // Always log OTP in the server console for local developer access
+    console.log(`\n=========================================`);
+    console.log(`🔑 [DEV MODE] OTP generated for ${email}: ${otp}`);
+    console.log(`=========================================\n`);
+
     const emailUser = process.env.EMAIL_USER || 'gowthamjoshav@gmail.com';
     const emailPass = (process.env.EMAIL_PASS || 'umze vpum tbkk tegg').replace(/["']/g, '').replace(/\s+/g, '');
 
@@ -509,43 +514,28 @@ export const registerOtp = async (req, res, next) => {
       await transporter.sendMail(mailOptions);
       res.status(200).json({
         success: true,
-        message: 'Verification OTP sent successfully to your email.'
+        message: 'Verification OTP sent successfully to your email.',
+        otp: process.env.NODE_ENV === 'development' ? otp : undefined
       });
     } catch (mailError) {
-      console.warn("SMTP email dispatch failed (e.g., cloud provider port block). Bypassing OTP check and registering user directly:", mailError.message);
+      console.warn("SMTP email dispatch failed (e.g. DNS or authentication issue):", mailError.message);
       
-      // Clear the temporary verification record
-      await OTPVerification.deleteOne({ email });
-
-      // Create official user account directly
-      const user = await User.create({
-        name,
-        email,
-        mobile,
-        password,
-        location,
-        companyName
-      });
-
-      const token = generateToken(res, user._id, user.role);
-
-      res.status(201).json({
-        success: true,
-        bypassed: true,
-        token,
-        data: {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          mobile: user.mobile,
-          role: user.role,
-          profileImage: user.profileImage,
-          bio: user.bio,
-          location: user.location,
-          companyName: user.companyName,
-          addresses: user.addresses
-        }
-      });
+      if (process.env.NODE_ENV === 'development') {
+        // In development mode, if SMTP fails, we keep the verification record active
+        // and return the OTP in the JSON response so the developer can complete the verification step manually.
+        return res.status(200).json({
+          success: true,
+          message: 'SMTP email failed, but verification OTP is generated (Dev Fallback).',
+          otp: otp
+        });
+      } else {
+        // In production, we clean up the verification session and fail the request
+        await OTPVerification.deleteOne({ email });
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to send verification email. Please check your network and try again.'
+        });
+      }
     }
   } catch (error) {
     next(error);
