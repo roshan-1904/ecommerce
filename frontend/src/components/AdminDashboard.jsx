@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL } from '../config';
 
 export default function AdminDashboard({ products, categories, onBackToShop, showToast }) {
   // Authentication State
@@ -90,7 +91,7 @@ export default function AdminDashboard({ products, categories, onBackToShop, sho
   const fetchDashboardStats = async () => {
     setIsFetchingStats(true);
     try {
-      const res = await fetch('http://localhost:5000/api/admin/dashboard', {
+      const res = await fetch(`${API_URL}/api/admin/dashboard`, {
         headers: {
           'Authorization': `Bearer ${adminToken}`
         }
@@ -109,7 +110,7 @@ export default function AdminDashboard({ products, categories, onBackToShop, sho
   const fetchUsers = async () => {
     setIsFetchingUsers(true);
     try {
-      const res = await fetch('http://localhost:5000/api/admin/users', {
+      const res = await fetch(`${API_URL}/api/admin/users`, {
         headers: {
           'Authorization': `Bearer ${adminToken}`
         }
@@ -130,7 +131,7 @@ export default function AdminDashboard({ products, categories, onBackToShop, sho
   const fetchEnquiries = async () => {
     setIsFetchingEnquiries(true);
     try {
-      const res = await fetch('http://localhost:5000/api/enquiries', {
+      const res = await fetch(`${API_URL}/api/enquiries`, {
         headers: {
           'Authorization': `Bearer ${adminToken}`
         }
@@ -152,7 +153,7 @@ export default function AdminDashboard({ products, categories, onBackToShop, sho
   const handleReplyEnquiry = async (id, replyText) => {
     if (!replyText.trim()) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/enquiries/${id}/reply`, {
+      const res = await fetch(`${API_URL}/api/enquiries/${id}/reply`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -177,7 +178,7 @@ export default function AdminDashboard({ products, categories, onBackToShop, sho
   const handleDeleteEnquiry = async (id) => {
     if (!window.confirm("Confirm deletion of this customer enquiry sheet?")) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/enquiries/${id}`, {
+      const res = await fetch(`${API_URL}/api/enquiries/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${adminToken}`
@@ -215,7 +216,7 @@ export default function AdminDashboard({ products, categories, onBackToShop, sho
     setIsSubmittingLogin(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/admin/login', {
+      const response = await fetch(`${API_URL}/api/auth/admin/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -264,7 +265,7 @@ export default function AdminDashboard({ products, categories, onBackToShop, sho
 
   const handleToggleBlock = async (userId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/users/${userId}/block`, {
+      const res = await fetch(`${API_URL}/api/admin/users/${userId}/block`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${adminToken}`
@@ -341,7 +342,7 @@ export default function AdminDashboard({ products, categories, onBackToShop, sho
     if (editingProduct) {
       const matchId = editingProduct.id || editingProduct._id;
       try {
-        const res = await fetch(`http://localhost:5000/api/products/${matchId}`, {
+        const res = await fetch(`${API_URL}/api/products/${matchId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -368,7 +369,7 @@ export default function AdminDashboard({ products, categories, onBackToShop, sho
     } else {
       const newId = Date.now();
       try {
-        const res = await fetch(`http://localhost:5000/api/products`, {
+        const res = await fetch(`${API_URL}/api/products`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -402,7 +403,7 @@ export default function AdminDashboard({ products, categories, onBackToShop, sho
     if (!window.confirm("Confirm deletion of this catalog item? This cannot be undone.")) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/products/${id}`, {
+      const res = await fetch(`${API_URL}/api/products/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${adminToken}`

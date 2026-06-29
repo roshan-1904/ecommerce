@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_URL } from '../config';
 
 export default function Newsletter({ onSubscribe }) {
   const [name, setName] = useState('');
@@ -27,7 +28,7 @@ export default function Newsletter({ onSubscribe }) {
     };
 
     try {
-      const response = await fetch('http://localhost:5000/api/enquiries', {
+      const response = await fetch(`${API_URL}/api/enquiries`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_URL } from '../config';
 
 export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfile, onLogout }) {
   const [activeTab, setActiveTab] = useState('signin');
@@ -36,7 +37,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
     };
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -83,7 +84,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
