@@ -31,8 +31,19 @@ app.use(helmet({
 }));
 
 // Enable CORS
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://ecommerce-blond-psi.vercel.app'
+];
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173', // Vite default port
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin) || (process.env.CLIENT_URL && origin === process.env.CLIENT_URL)) {
+      callback(null, true);
+    } else {
+      callback(null, false);
+    }
+  },
   credentials: true
 }));
 
