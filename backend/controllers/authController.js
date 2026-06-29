@@ -514,19 +514,17 @@ export const registerOtp = async (req, res, next) => {
       await transporter.sendMail(mailOptions);
       res.status(200).json({
         success: true,
-        message: 'Verification OTP sent successfully to your email.',
-        otp: process.env.NODE_ENV === 'development' ? otp : undefined
+        message: 'Verification OTP sent successfully to your email.'
       });
     } catch (mailError) {
       console.warn("SMTP email dispatch failed (e.g. DNS or authentication issue):", mailError.message);
       
       if (process.env.NODE_ENV === 'development') {
         // In development mode, if SMTP fails, we keep the verification record active
-        // and return the OTP in the JSON response so the developer can complete the verification step manually.
+        // and log it to the console, but we do not return the OTP code to the client.
         return res.status(200).json({
           success: true,
-          message: 'SMTP email failed, but verification OTP is generated (Dev Fallback).',
-          otp: otp
+          message: 'SMTP email dispatch failed, but verification session remains active. Please check the backend server console for the generated OTP code.'
         });
       } else {
         // In production, we clean up the verification session and fail the request
