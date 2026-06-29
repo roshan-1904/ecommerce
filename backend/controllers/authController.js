@@ -477,7 +477,10 @@ export const registerOtp = async (req, res, next) => {
       },
       tls: {
         rejectUnauthorized: false
-      }
+      },
+      connectionTimeout: 2500, // 2.5 seconds timeout for connection
+      greetingTimeout: 2500,   // 2.5 seconds timeout for SMTP greeting
+      socketTimeout: 3000      // 3.0 seconds socket inactivity timeout
     });
 
     // Email Options
