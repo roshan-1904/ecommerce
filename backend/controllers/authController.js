@@ -1,7 +1,9 @@
 import User from '../models/User.js';
 import Admin from '../models/Admin.js';
 import Address from '../models/Address.js';
+import OTPVerification from '../models/OTPVerification.js';
 import { generateToken } from '../utils/generateToken.js';
+import nodemailer from 'nodemailer';
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
@@ -429,6 +431,151 @@ export const deleteAddress = async (req, res, next) => {
       success: true,
       message: 'Address deleted successfully'
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Generate OTP and send to Email for User Registration
+// @route   POST /api/auth/register-otp
+// @access  Public
+export const registerOtp = async (req, res, next) => {
+  try {
+    const { name, email, mobile, password, location, companyName } = req.body;
+
+    if (!email || !name || !mobile || !password || !location || !companyName) {
+      return res.status(400).json({ success: false, message: 'Please provide all required fields' });
+    }
+
+    // Check if user already exists
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ success: false, message: 'User already exists with this email' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Create or update temporary pending registration data
+    await OTPVerification.findOneAndDelete({ email }); // Delete any old pending verification first
+    
+    await OTPVerification.create({
+      email,
+      otp,
+      registrationData: { name, email, mobile, password, location, companyName }
+    });
+
+    // Configure Nodemailer Transport using user's Gmail SMTP configuration
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER || 'gowthamjoshav@gmail.com',
+        pass: process.env.EMAIL_PASS || 'umze vpum tbkk tegg'
+      }
+    });
+
+    // Email Options
+    const mailOptions = {
+      from: `"NeoMart Verification" <${process.env.EMAIL_USER || 'gowthamjoshav@gmail.com'}>`,
+      to: email,
+      subject: 'NeoMart Account OTP Verification Code',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+          <h2 style="color: #6366f1; text-align: center;">Verify Your NeoMart Account</h2>
+          <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+          <p>Hello <strong>${name}</strong>,</p>
+          <p>Thank you for choosing NeoMart! To complete your registration profile, please verify your email address using this OTP code:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <span style="font-size: 32px; font-weight: 800; letter-spacing: 6px; padding: 12px 24px; background-color: #f3f4f6; border-radius: 8px; color: #4f46e5; border: 1px dashed #6366f1; display: inline-block;">${otp}</span>
+          </div>
+          <p style="color: #6b7280; font-size: 13px;">This OTP verification code is valid for <strong>10 minutes</strong>. If you did not request this, you can safely ignore this email.</p>
+          <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+          <p style="font-size: 12px; color: #9ca3af; text-align: center;">© 2026 NeoMart E-Commerce Cluster. All rights reserved.</p>
+        </div>
+      `
+    };
+
+    // Send Mail
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({
+      success: true,
+      message: 'Verification OTP sent successfully to your email.'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Verify OTP and Create User
+// @route   POST /api/auth/verify-otp
+// @access  Public
+export const verifyOtp = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ success: false, message: 'Please provide email and verification OTP' });
+    }
+
+    // Find the pending verification
+    const pendingVerification = await OTPVerification.findOne({ email });
+    if (!pendingVerification) {
+      return res.status(400).json({ success: false, message: 'Verification session expired or not found. Please sign up again.' });
+    }
+
+    // Verify code match
+    if (pendingVerification.otp !== otp) {
+      return res.status(400).json({ success: false, message: 'Invalid OTP code. Please check your email and try again.' });
+    }
+
+    // OTP verified! Retrieve registration data
+    const { name, mobile, password, location, companyName } = pendingVerification.registrationData;
+
+    // Create official user profile
+    const user = await User.create({
+      name,
+      email,
+      mobile,
+      password,
+      location,
+      companyName
+    });
+
+    if (user) {
+      // Record login history
+      user.lastLogin = new Date();
+      user.loginHistory.push({
+        ip: req.ip || req.connection.remoteAddress,
+        userAgent: req.headers['user-agent']
+      });
+      await user.save();
+
+      // Clear the verification record from database
+      await OTPVerification.deleteOne({ email });
+
+      // Generate JWT Token
+      const token = generateToken(res, user._id, user.role);
+
+      res.status(201).json({
+        success: true,
+        token,
+        data: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          mobile: user.mobile,
+          role: user.role,
+          profileImage: user.profileImage,
+          bio: user.bio,
+          location: user.location,
+          companyName: user.companyName,
+          addresses: user.addresses
+        }
+      });
+    } else {
+      res.status(400).json({ success: false, message: 'Error creating user account.' });
+    }
   } catch (error) {
     next(error);
   }

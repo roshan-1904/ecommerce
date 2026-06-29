@@ -3,6 +3,8 @@ import {
   registerUser,
   loginUser,
   loginAdmin,
+  registerOtp,
+  verifyOtp,
   logoutUser,
   getUserProfile,
   updateUserProfile,
@@ -19,6 +21,8 @@ const router = express.Router();
 
 // Public routes
 router.post('/register', registerUser);
+router.post('/register-otp', registerOtp);
+router.post('/verify-otp', verifyOtp);
 router.post('/login', loginUser);
 router.post('/admin/login', loginAdmin);
 

@@ -11,6 +11,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
   const [location, setLocation] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [mobile, setMobile] = useState('');
+  const [otp, setOtp] = useState('');
   
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,7 +38,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
     };
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/register`, {
+      const response = await fetch(`${API_URL}/api/auth/register-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -48,17 +49,13 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
       const result = await response.json();
 
       if (result.success) {
-        localStorage.setItem('userToken', result.token);
-        localStorage.setItem('userData', JSON.stringify(result.data));
-        
-        onLoginSuccess(result.data);
-        onClose();
-        resetForm();
+        setActiveTab('otp-verification');
+        setOtp('');
       } else {
         setErrorMessage(result.message || "Registration failed. Try again.");
       }
     } catch (err) {
-      console.error("Backend register error, fallback to mock account creation:", err);
+      console.error("Backend register-otp error, fallback to direct mock registration:", err);
       const fallbackUser = {
         name,
         email,
@@ -73,6 +70,46 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
       onLoginSuccess(fallbackUser);
       onClose();
       resetForm();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setErrorMessage('');
+
+    if (!otp) {
+      setErrorMessage("Please enter the verification OTP.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/auth/verify-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, otp })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        localStorage.setItem('userToken', result.token);
+        localStorage.setItem('userData', JSON.stringify(result.data));
+        
+        onLoginSuccess(result.data);
+        onClose();
+        resetForm();
+      } else {
+        setErrorMessage(result.message || "Verification failed. Check the OTP code.");
+      }
+    } catch (err) {
+      console.error("OTP verification error:", err);
+      setErrorMessage("Connection failed. Try verifying again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -129,6 +166,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
     setLocation('');
     setCompanyName('');
     setMobile('');
+    setOtp('');
     setErrorMessage('');
   };
 
@@ -230,20 +268,26 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
           ) : (
             /* Sign In / Sign Up Tabs */
             <>
-              <div className="login-tabs" style={{ marginBottom: '24px' }}>
-                <button 
-                  className={`login-tab ${activeTab === 'signin' ? 'active' : ''}`} 
-                  onClick={() => { setActiveTab('signin'); setErrorMessage(''); }}
-                >
-                  Sign In
-                </button>
-                <button 
-                  className={`login-tab ${activeTab === 'signup' ? 'active' : ''}`} 
-                  onClick={() => { setActiveTab('signup'); setErrorMessage(''); }}
-                >
-                  Sign Up
-                </button>
-              </div>
+              {activeTab !== 'otp-verification' ? (
+                <div className="login-tabs" style={{ marginBottom: '24px' }}>
+                  <button 
+                    className={`login-tab ${activeTab === 'signin' ? 'active' : ''}`} 
+                    onClick={() => { setActiveTab('signin'); setErrorMessage(''); }}
+                  >
+                    Sign In
+                  </button>
+                  <button 
+                    className={`login-tab ${activeTab === 'signup' ? 'active' : ''}`} 
+                    onClick={() => { setActiveTab('signup'); setErrorMessage(''); }}
+                  >
+                    Sign Up
+                  </button>
+                </div>
+              ) : (
+                <h3 style={{ fontSize: '18px', fontWeight: '800', textAlign: 'center', marginBottom: '20px', color: 'var(--primary)' }}>
+                  Email OTP Verification
+                </h3>
+              )}
 
               {errorMessage && (
                 <div style={{
@@ -298,7 +342,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
                     {isSubmitting ? 'Authenticating...' : 'Sign In to Account'}
                   </button>
                 </form>
-              ) : (
+              ) : activeTab === 'signup' ? (
                 /* Sign Up Form */
                 <form className="login-form" onSubmit={handleSignUp} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   <div className="form-group">
@@ -376,6 +420,56 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
 
                   <button type="submit" className="btn-login-submit" disabled={isSubmitting} style={{ marginTop: '10px' }}>
                     {isSubmitting ? 'Registering Account...' : 'Register Profile'}
+                  </button>
+                </form>
+              ) : (
+                /* OTP Verification Form */
+                <form className="login-form" onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div className="form-group" style={{ textAlign: 'center' }}>
+                    <label className="form-label" style={{ textTransform: 'none', fontSize: '13px', display: 'block', marginBottom: '12px', lineHeight: '1.5' }}>
+                      We have sent a verification code to:<br/>
+                      <strong style={{ color: 'var(--text-primary)', fontSize: '14px' }}>{email}</strong>
+                    </label>
+                    <input 
+                      type="text" 
+                      maxLength="6"
+                      className="form-input" 
+                      placeholder="000000" 
+                      required 
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      style={{ 
+                        textAlign: 'center', 
+                        fontSize: '24px', 
+                        letterSpacing: '8px', 
+                        fontWeight: '800', 
+                        height: '52px',
+                        border: '2px solid var(--primary)',
+                        background: 'rgba(99, 102, 241, 0.03)'
+                      }}
+                    />
+                  </div>
+
+                  <button type="submit" className="btn-login-submit" disabled={isSubmitting} style={{ marginTop: '10px' }}>
+                    {isSubmitting ? 'Verifying Code...' : 'Confirm OTP & Complete SignUp'}
+                  </button>
+
+                  <button 
+                    type="button" 
+                    onClick={() => { setActiveTab('signup'); setErrorMessage(''); }}
+                    style={{ 
+                      background: 'transparent', 
+                      border: 'none', 
+                      color: 'var(--accent)', 
+                      cursor: 'pointer', 
+                      textAlign: 'center', 
+                      marginTop: '8px', 
+                      fontSize: '13px',
+                      fontWeight: '700',
+                      textDecoration: 'underline'
+                    }}
+                  >
+                    ← Back to Registration
                   </button>
                 </form>
               )}
