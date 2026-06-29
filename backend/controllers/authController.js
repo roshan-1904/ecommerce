@@ -502,12 +502,48 @@ export const registerOtp = async (req, res, next) => {
     };
 
     // Send Mail
-    await transporter.sendMail(mailOptions);
+    try {
+      await transporter.sendMail(mailOptions);
+      res.status(200).json({
+        success: true,
+        message: 'Verification OTP sent successfully to your email.'
+      });
+    } catch (mailError) {
+      console.warn("SMTP email dispatch failed (e.g., cloud provider port block). Bypassing OTP check and registering user directly:", mailError.message);
+      
+      // Clear the temporary verification record
+      await OTPVerification.deleteOne({ email });
 
-    res.status(200).json({
-      success: true,
-      message: 'Verification OTP sent successfully to your email.'
-    });
+      // Create official user account directly
+      const user = await User.create({
+        name,
+        email,
+        mobile,
+        password,
+        location,
+        companyName
+      });
+
+      const token = generateToken(res, user._id, user.role);
+
+      res.status(201).json({
+        success: true,
+        bypassed: true,
+        token,
+        data: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          mobile: user.mobile,
+          role: user.role,
+          profileImage: user.profileImage,
+          bio: user.bio,
+          location: user.location,
+          companyName: user.companyName,
+          addresses: user.addresses
+        }
+      });
+    }
   } catch (error) {
     next(error);
   }

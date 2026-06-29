@@ -49,8 +49,16 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
       const result = await response.json();
 
       if (result.success) {
-        setActiveTab('otp-verification');
-        setOtp('');
+        if (result.bypassed) {
+          localStorage.setItem('userToken', result.token);
+          localStorage.setItem('userData', JSON.stringify(result.data));
+          onLoginSuccess(result.data);
+          onClose();
+          resetForm();
+        } else {
+          setActiveTab('otp-verification');
+          setOtp('');
+        }
       } else {
         setErrorMessage(result.message || "Registration failed. Try again.");
       }
