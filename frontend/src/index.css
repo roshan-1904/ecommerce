@@ -1764,14 +1764,62 @@ h3, h4, h5, h6 {
   .container {
     padding: 0 16px;
   }
+  .navbar {
+    height: auto !important;
+    padding: 12px 0 !important;
+  }
   .navbar-container {
-    gap: 16px;
+    flex-direction: column !important;
+    gap: 12px !important;
+    align-items: stretch !important;
   }
   .search-container {
-    display: none;
+    display: block !important;
+    max-width: 100% !important;
+    order: 3 !important;
   }
-  .nav-links li:not(:last-child) {
-    display: none;
+  .nav-links {
+    width: 100% !important;
+    justify-content: space-between !important;
+    gap: 4px !important;
+  }
+  .nav-text {
+    display: none !important;
+  }
+  .nav-link {
+    padding: 8px 10px !important;
+  }
+  .nav-link-badge {
+    position: absolute !important;
+    top: 2px !important;
+    right: 2px !important;
+    font-size: 8px !important;
+    min-width: 15px !important;
+    height: 15px !important;
+    padding: 0 2px !important;
+  }
+  .filter-bar-container {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    padding: 4px 0 8px 0 !important;
+    gap: 8px !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .filter-bar-container::-webkit-scrollbar {
+    display: none !important;
+  }
+  .filter-bar-container > span {
+    display: none !important;
+  }
+  .filter-bar-container > div:last-child {
+    margin-left: 0 !important;
+  }
+  .custom-dropdown {
+    flex-shrink: 0 !important;
+  }
+  .filter-sidebar {
+    display: none !important;
   }
   .slide-title {
     font-size: 36px;

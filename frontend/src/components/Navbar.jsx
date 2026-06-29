@@ -104,20 +104,32 @@ export default function Navbar({
           <ul className="nav-links">
             <li>
               <a href="#" className="nav-link" onClick={(e) => { e.preventDefault(); onResetFilters(); }}>
-                Home
+                <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                  <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <span className="nav-text">Home</span>
               </a>
             </li>
 
             <li>
               <a href="#" className="nav-link" onClick={(e) => { e.preventDefault(); onWishlistOpen(); }}>
-                Wishlist
+                <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+                <span className="nav-text">Wishlist</span>
                 {wishlistCount > 0 && <span className="nav-link-badge">{wishlistCount}</span>}
               </a>
             </li>
 
             <li>
               <a href="#" className="nav-link" onClick={(e) => { e.preventDefault(); onCartOpen(); }}>
-                Cart
+                <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="9" cy="21" r="1"></circle>
+                  <circle cx="20" cy="21" r="1"></circle>
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+                <span className="nav-text">Cart</span>
                 {cartCount > 0 && <span className="nav-link-badge">{cartCount}</span>}
               </a>
             </li>
@@ -135,11 +147,15 @@ export default function Navbar({
                     alt="Profile" 
                     style={{ width: '26px', height: '26px', borderRadius: '50%', border: '1.5px solid var(--primary)', objectFit: 'cover' }} 
                   />
-                  <span style={{ fontSize: '13px', fontWeight: '700' }}>{userProfile.name.split(' ')[0]}</span>
+                  <span className="nav-text" style={{ fontSize: '13px', fontWeight: '700' }}>{userProfile.name.split(' ')[0]}</span>
                 </a>
               ) : (
                 <a href="#" className="nav-link" onClick={(e) => { e.preventDefault(); onLoginOpen(); }}>
-                  Account
+                  <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  <span className="nav-text">Account</span>
                 </a>
               )}
             </li>
@@ -155,7 +171,11 @@ export default function Navbar({
                 }}
                 style={{ color: 'var(--primary)', fontWeight: '700' }}
               >
-                Admin
+                <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <span className="nav-text">Admin</span>
               </a>
             </li>
 

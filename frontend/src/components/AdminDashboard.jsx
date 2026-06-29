@@ -892,6 +892,67 @@ export default function AdminDashboard({ products, categories, onBackToShop, sho
           background: rgba(255, 255, 255, 0.04) !important;
           color: #fff !important;
         }
+        
+        @media (max-width: 768px) {
+          .admin-console-layout {
+            flex-direction: column !important;
+          }
+          .admin-sidebar {
+            width: 100% !important;
+            height: auto !important;
+            border-right: none !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+          }
+          .sidebar-header {
+            display: none !important;
+          }
+          .sidebar-menu {
+            flex-direction: row !important;
+            overflow-x: auto !important;
+            padding: 10px !important;
+            gap: 10px !important;
+            -webkit-overflow-scrolling: touch !important;
+          }
+          .sidebar-menu::-webkit-scrollbar {
+            display: none !important;
+          }
+          .sidebar-item {
+            padding: 8px 14px !important;
+            font-size: 13px !important;
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+          }
+          .sidebar-footer {
+            display: none !important;
+          }
+          .admin-topbar {
+            padding: 0 16px !important;
+            height: 60px !important;
+          }
+          .admin-topbar div:first-child {
+            display: none !important;
+          }
+          .admin-main > div {
+            padding: 20px !important;
+          }
+          .metrics-grid {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
+          .admin-table th, .admin-table td {
+            padding: 12px 14px !important;
+            font-size: 12px !important;
+          }
+          .table-container {
+            width: 100% !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+          }
+          .drawer-sheet {
+            max-width: 100% !important;
+            padding: 20px !important;
+          }
+        }
       `}</style>
 
       {/* 1. LEFT SIDEBAR */}
