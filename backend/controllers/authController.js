@@ -472,6 +472,7 @@ export const registerOtp = async (req, res, next) => {
 
     const emailUser = process.env.EMAIL_USER || 'gowthamjoshav@gmail.com';
     const emailPass = (process.env.EMAIL_PASS || 'umze vpum tbkk tegg').replace(/["']/g, '').replace(/\s+/g, '');
+    const emailFrom = process.env.EMAIL_FROM || emailUser;
 
     // Configure Nodemailer Transport using SMTP configuration from environment or Gmail fallback
     const transporter = nodemailer.createTransport({
@@ -492,7 +493,7 @@ export const registerOtp = async (req, res, next) => {
 
     // Email Options
     const mailOptions = {
-      from: `"NeoMart Verification" <${emailUser}>`,
+      from: `"NeoMart Verification" <${emailFrom}>`,
       to: email,
       subject: 'NeoMart Account OTP Verification Code',
       html: `
