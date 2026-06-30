@@ -473,9 +473,11 @@ export const registerOtp = async (req, res, next) => {
     const emailUser = process.env.EMAIL_USER || 'gowthamjoshav@gmail.com';
     const emailPass = (process.env.EMAIL_PASS || 'umze vpum tbkk tegg').replace(/["']/g, '').replace(/\s+/g, '');
 
-    // Configure Nodemailer Transport using user's Gmail SMTP configuration
+    // Configure Nodemailer Transport using SMTP configuration from environment or Gmail fallback
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.EMAIL_PORT || '587', 10),
+      secure: process.env.EMAIL_SECURE === 'true', // true for port 465, false for 587/other ports
       auth: {
         user: emailUser,
         pass: emailPass
