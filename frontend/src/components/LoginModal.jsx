@@ -12,6 +12,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
   const [companyName, setCompanyName] = useState('');
   const [mobile, setMobile] = useState('');
   const [otp, setOtp] = useState('');
+  const [devOtpMessage, setDevOtpMessage] = useState('');
   
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,7 +58,13 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
           resetForm();
         } else {
           setActiveTab('otp-verification');
-          setOtp('');
+          if (result.otp) {
+            setOtp(result.otp);
+            setDevOtpMessage(`[DEV MODE] Generated OTP: ${result.otp}`);
+          } else {
+            setOtp('');
+            setDevOtpMessage('');
+          }
         }
       } else {
         setErrorMessage(result.message || "Registration failed. Try again.");
@@ -175,6 +182,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
     setCompanyName('');
     setMobile('');
     setOtp('');
+    setDevOtpMessage('');
     setErrorMessage('');
   };
 
@@ -456,6 +464,20 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
                         background: 'rgba(99, 102, 241, 0.03)'
                       }}
                     />
+                    {devOtpMessage && (
+                      <div className="dev-otp-message" style={{
+                        marginTop: '12px',
+                        padding: '10px',
+                        borderRadius: '6px',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                        color: '#10b981',
+                        fontSize: '13px',
+                        fontWeight: '600'
+                      }}>
+                        💡 {devOtpMessage}
+                      </div>
+                    )}
                   </div>
 
                   <button type="submit" className="btn-login-submit" disabled={isSubmitting} style={{ marginTop: '10px' }}>

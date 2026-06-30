@@ -483,9 +483,9 @@ export const registerOtp = async (req, res, next) => {
       tls: {
         rejectUnauthorized: false
       },
-      connectionTimeout: 2500, // 2.5 seconds timeout for connection
-      greetingTimeout: 2500,   // 2.5 seconds timeout for SMTP greeting
-      socketTimeout: 3000      // 3.0 seconds socket inactivity timeout
+      connectionTimeout: 10000, // 10 seconds timeout for connection
+      greetingTimeout: 10000,   // 10 seconds timeout for SMTP greeting
+      socketTimeout: 15000      // 15 seconds socket inactivity timeout
     });
 
     // Email Options
@@ -514,17 +514,19 @@ export const registerOtp = async (req, res, next) => {
       await transporter.sendMail(mailOptions);
       res.status(200).json({
         success: true,
-        message: 'Verification OTP sent successfully to your email.'
+        message: 'Verification OTP sent successfully to your email.',
+        ...(process.env.NODE_ENV === 'development' ? { otp } : {})
       });
     } catch (mailError) {
       console.warn("SMTP email dispatch failed (e.g. DNS or authentication issue):", mailError.message);
       
       if (process.env.NODE_ENV === 'development') {
         // In development mode, if SMTP fails, we keep the verification record active
-        // and log it to the console, but we do not return the OTP code to the client.
+        // and log it to the console, and return the OTP code to the client for development ease.
         return res.status(200).json({
           success: true,
-          message: 'SMTP email dispatch failed, but verification session remains active. Please check the backend server console for the generated OTP code.'
+          message: 'SMTP email dispatch failed, but verification session remains active. Please check the backend server console for the generated OTP code.',
+          otp: otp
         });
       } else {
         // In production, we clean up the verification session and fail the request
