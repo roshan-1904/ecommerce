@@ -514,7 +514,54 @@ export const registerOtp = async (req, res, next) => {
 
     // Send Mail
     try {
-      await transporter.sendMail(mailOptions);
+      if (emailPass.startsWith('xkeysib-')) {
+        // Send email using Brevo REST API (port 443 - bypasses cloud SMTP blocks)
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'api-key': emailPass,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            sender: {
+              name: 'NeoMart Verification',
+              email: emailFrom
+            },
+            to: [{ email }],
+            subject: mailOptions.subject,
+            htmlContent: mailOptions.html
+          })
+        });
+
+        const resData = await response.json();
+        if (!response.ok) {
+          throw new Error(resData.message || 'Brevo API error');
+        }
+      } else if (emailPass.startsWith('re_')) {
+        // Send email using Resend REST API (port 443 - bypasses cloud SMTP blocks)
+        const response = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${emailPass}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: `NeoMart Verification <${emailFrom}>`,
+            to: email,
+            subject: mailOptions.subject,
+            html: mailOptions.html
+          })
+        });
+
+        const resData = await response.json();
+        if (!response.ok) {
+          throw new Error(resData.message || 'Resend API error');
+        }
+      } else {
+        // Standard SMTP Nodemailer
+        await transporter.sendMail(mailOptions);
+      }
+
       res.status(200).json({
         success: true,
         message: 'Verification OTP sent successfully to your email.'
