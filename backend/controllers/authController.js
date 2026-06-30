@@ -527,7 +527,7 @@ export const registerOtp = async (req, res, next) => {
         // and log it to the console.
         return res.status(200).json({
           success: true,
-          message: 'SMTP email dispatch failed, but verification session remains active. Please check the backend server console for the generated OTP code.'
+          message: `SMTP email dispatch failed (${mailError.message}), but verification session remains active.`
         });
       } else {
         // In production, we clean up the verification session and fail the request
