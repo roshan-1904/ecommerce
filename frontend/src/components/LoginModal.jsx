@@ -133,22 +133,25 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/login-otp`, {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email, password })
       });
 
       const result = await response.json();
 
       if (result.success) {
-        setOtpFlowType('login');
-        setActiveTab('otp-verification');
-        setOtp('');
+        localStorage.setItem('userToken', result.token);
+        localStorage.setItem('userData', JSON.stringify(result.data));
+        
+        onLoginSuccess(result.data);
+        onClose();
+        resetForm();
       } else {
-        setErrorMessage(result.message || "Invalid email address or login failed.");
+        setErrorMessage(result.message || "Invalid credentials.");
       }
     } catch (err) {
       console.error("Backend login error, fallback to guest sign-in:", err);
@@ -327,8 +330,28 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
                     />
                   </div>
 
+                  <div className="form-group">
+                    <label className="form-label">Password</label>
+                    <input 
+                      type="password" 
+                      className="form-input" 
+                      placeholder="••••••••" 
+                      required 
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                      <input type="checkbox" style={{ accentColor: 'var(--primary)' }} />
+                      Remember me
+                    </label>
+                    <a href="#" style={{ color: 'var(--primary)', fontWeight: '700' }}>Forgot Password?</a>
+                  </div>
+
                   <button type="submit" className="btn-login-submit" disabled={isSubmitting} style={{ marginTop: '10px' }}>
-                    {isSubmitting ? 'Sending OTP...' : 'Send Login OTP'}
+                    {isSubmitting ? 'Authenticating...' : 'Sign In to Account'}
                   </button>
                 </form>
               ) : activeTab === 'signup' ? (
