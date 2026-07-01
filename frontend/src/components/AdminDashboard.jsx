@@ -96,6 +96,10 @@ export default function AdminDashboard({ products, categories, onBackToShop, sho
           'Authorization': `Bearer ${adminToken}`
         }
       });
+      if (res.status === 401) {
+        handleLogout();
+        return;
+      }
       const data = await res.json();
       if (data.success && data.data) {
         setStats(data.data);
@@ -115,6 +119,10 @@ export default function AdminDashboard({ products, categories, onBackToShop, sho
           'Authorization': `Bearer ${adminToken}`
         }
       });
+      if (res.status === 401) {
+        handleLogout();
+        return;
+      }
       const data = await res.json();
       if (data.success && data.data) {
         setUsersList(data.data);
@@ -136,6 +144,10 @@ export default function AdminDashboard({ products, categories, onBackToShop, sho
           'Authorization': `Bearer ${adminToken}`
         }
       });
+      if (res.status === 401) {
+        handleLogout();
+        return;
+      }
       const data = await res.json();
       if (data.success && data.data) {
         setEnquiriesList(data.data);

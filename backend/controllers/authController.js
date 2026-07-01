@@ -453,6 +453,44 @@ export const registerOtp = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'User already exists with this email' });
     }
 
+    // If OTP bypass is enabled (e.g. for testing/staging), create the user immediately
+    if (process.env.BYPASS_EMAIL_OTP === 'true') {
+      const user = await User.create({
+        name,
+        email,
+        mobile,
+        password,
+        location,
+        companyName
+      });
+
+      if (user) {
+        user.lastLogin = new Date();
+        user.loginHistory.push({
+          ip: req.ip || req.connection.remoteAddress,
+          userAgent: req.headers['user-agent']
+        });
+        await user.save();
+
+        const token = generateToken(res, user._id, user.role);
+
+        return res.status(201).json({
+          success: true,
+          bypassed: true,
+          token,
+          data: {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            mobile: user.mobile,
+            location: user.location,
+            companyName: user.companyName,
+            role: user.role
+          }
+        });
+      }
+    }
+
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
