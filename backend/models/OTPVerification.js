@@ -13,7 +13,7 @@ const OTPVerificationSchema = new mongoose.Schema({
   },
   registrationData: {
     type: Object,
-    required: [true, 'Registration data is required']
+    required: false
   },
   createdAt: {
     type: Date,

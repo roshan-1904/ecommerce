@@ -5,6 +5,8 @@ import {
   loginAdmin,
   registerOtp,
   verifyOtp,
+  loginOtp,
+  verifyLoginOtp,
   logoutUser,
   getUserProfile,
   updateUserProfile,
@@ -24,6 +26,8 @@ router.post('/register', registerUser);
 router.post('/register-otp', registerOtp);
 router.post('/verify-otp', verifyOtp);
 router.post('/login', loginUser);
+router.post('/login-otp', loginOtp);
+router.post('/verify-login-otp', verifyLoginOtp);
 router.post('/admin/login', loginAdmin);
 
 // Private routes

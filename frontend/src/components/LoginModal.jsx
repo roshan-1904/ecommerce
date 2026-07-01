@@ -3,6 +3,7 @@ import { API_URL } from '../config';
 
 export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfile, onLogout }) {
   const [activeTab, setActiveTab] = useState('signin');
+  const [otpFlowType, setOtpFlowType] = useState('signup'); // 'signup' | 'login'
   
   // Input fields
   const [email, setEmail] = useState('');
@@ -56,6 +57,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
           onClose();
           resetForm();
         } else {
+          setOtpFlowType('signup');
           setActiveTab('otp-verification');
           setOtp('');
         }
@@ -94,8 +96,10 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
 
     setIsSubmitting(true);
 
+    const endpoint = otpFlowType === 'login' ? '/api/auth/verify-login-otp' : '/api/auth/verify-otp';
+
     try {
-      const response = await fetch(`${API_URL}/api/auth/verify-otp`, {
+      const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -129,25 +133,22 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
+      const response = await fetch(`${API_URL}/api/auth/login-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email })
       });
 
       const result = await response.json();
 
       if (result.success) {
-        localStorage.setItem('userToken', result.token);
-        localStorage.setItem('userData', JSON.stringify(result.data));
-        
-        onLoginSuccess(result.data);
-        onClose();
-        resetForm();
+        setOtpFlowType('login');
+        setActiveTab('otp-verification');
+        setOtp('');
       } else {
-        setErrorMessage(result.message || "Invalid credentials.");
+        setErrorMessage(result.message || "Invalid email address or login failed.");
       }
     } catch (err) {
       console.error("Backend login error, fallback to guest sign-in:", err);
@@ -326,28 +327,8 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess, userProfil
                     />
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Password</label>
-                    <input 
-                      type="password" 
-                      className="form-input" 
-                      placeholder="••••••••" 
-                      required 
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                      <input type="checkbox" style={{ accentColor: 'var(--primary)' }} />
-                      Remember me
-                    </label>
-                    <a href="#" style={{ color: 'var(--primary)', fontWeight: '700' }}>Forgot Password?</a>
-                  </div>
-
                   <button type="submit" className="btn-login-submit" disabled={isSubmitting} style={{ marginTop: '10px' }}>
-                    {isSubmitting ? 'Authenticating...' : 'Sign In to Account'}
+                    {isSubmitting ? 'Sending OTP...' : 'Send Login OTP'}
                   </button>
                 </form>
               ) : activeTab === 'signup' ? (

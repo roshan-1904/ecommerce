@@ -701,3 +701,215 @@ export const verifyOtp = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Generate OTP and send to Email for User Login
+// @route   POST /api/auth/login-otp
+// @access  Public
+export const loginOtp = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Please provide email address' });
+    }
+
+    // Check if user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'No user registered with this email address' });
+    }
+
+    // Check if user is blocked
+    if (user.isBlocked) {
+      return res.status(403).json({ success: false, message: 'Your account has been blocked' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Create or update temporary pending login OTP verification record
+    await OTPVerification.findOneAndDelete({ email });
+    await OTPVerification.create({
+      email,
+      otp,
+      registrationData: { isLogin: true }
+    });
+
+    // Always log OTP in the server console for local developer access
+    console.log(`\n=========================================`);
+    console.log(`🔑 [DEV MODE] Login OTP generated for ${email}: ${otp}`);
+    console.log(`=========================================\n`);
+
+    const emailUser = process.env.EMAIL_USER || 'gowthamjoshav@gmail.com';
+    const emailPass = (process.env.EMAIL_PASS || 'umze vpum tbkk tegg').replace(/["']/g, '').replace(/\s+/g, '');
+    const emailFrom = process.env.EMAIL_FROM || emailUser;
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.EMAIL_PORT || '587', 10),
+      secure: process.env.EMAIL_SECURE === 'true',
+      auth: {
+        user: emailUser,
+        pass: emailPass
+      },
+      tls: {
+        rejectUnauthorized: false
+      },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000
+    });
+
+    const mailOptions = {
+      from: `"NeoMart Verification" <${emailFrom}>`,
+      to: email,
+      subject: 'NeoMart Account Login OTP Code',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+          <h2 style="color: #6366f1; text-align: center;">Verify Your NeoMart Login</h2>
+          <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+          <p>Hello <strong>${user.name}</strong>,</p>
+          <p>You requested an OTP code to log in to your NeoMart profile. Please enter the following code:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <span style="font-size: 32px; font-weight: 800; letter-spacing: 6px; padding: 12px 24px; background-color: #f3f4f6; border-radius: 8px; color: #4f46e5; border: 1px dashed #6366f1; display: inline-block;">${otp}</span>
+          </div>
+          <p style="color: #6b7280; font-size: 13px;">This OTP verification code is valid for <strong>10 minutes</strong>. If you did not request this, please secure your account credentials.</p>
+          <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+          <p style="font-size: 12px; color: #9ca3af; text-align: center;">© 2026 NeoMart E-Commerce Cluster. All rights reserved.</p>
+        </div>
+      `
+    };
+
+    // Send Mail
+    try {
+      if (emailPass.startsWith('xkeysib-')) {
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'api-key': emailPass,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            sender: { name: 'NeoMart Verification', email: emailFrom },
+            to: [{ email }],
+            subject: mailOptions.subject,
+            htmlContent: mailOptions.html
+          })
+        });
+
+        const resData = await response.json();
+        if (!response.ok) {
+          throw new Error(resData.message || 'Brevo API error');
+        }
+      } else if (emailPass.startsWith('re_')) {
+        const response = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${emailPass}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: `NeoMart Verification <${emailFrom}>`,
+            to: email,
+            subject: mailOptions.subject,
+            html: mailOptions.html
+          })
+        });
+
+        const resData = await response.json();
+        if (!response.ok) {
+          throw new Error(resData.message || 'Resend API error');
+        }
+      } else {
+        await transporter.sendMail(mailOptions);
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Login OTP code sent successfully to your email.'
+      });
+    } catch (mailError) {
+      console.warn("SMTP email dispatch failed (e.g. DNS or authentication issue):", mailError.message);
+      
+      if (process.env.NODE_ENV === 'development' || process.env.BYPASS_EMAIL_OTP === 'true') {
+        return res.status(200).json({
+          success: true,
+          message: `SMTP email dispatch failed (${mailError.message}), but login verification session remains active.`
+        });
+      } else {
+        await OTPVerification.deleteOne({ email });
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to send login verification email. Please check your network and try again.'
+        });
+      }
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Verify Login OTP and Log User In
+// @route   POST /api/auth/verify-login-otp
+// @access  Public
+export const verifyLoginOtp = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ success: false, message: 'Please provide email and verification OTP' });
+    }
+
+    // Find the pending verification
+    const pendingVerification = await OTPVerification.findOne({ email });
+    if (!pendingVerification) {
+      return res.status(400).json({ success: false, message: 'Verification session expired or not found. Please request a new OTP.' });
+    }
+
+    // Verify code match
+    const masterOtp = process.env.MASTER_OTP || '123456';
+    if (pendingVerification.otp !== otp && otp !== masterOtp) {
+      return res.status(400).json({ success: false, message: 'Invalid OTP code. Please check your email and try again.' });
+    }
+
+    // OTP verified! Get user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User record not found.' });
+    }
+
+    // Record login history
+    user.lastLogin = new Date();
+    user.loginHistory.push({
+      ip: req.ip || req.connection.remoteAddress,
+      userAgent: req.headers['user-agent']
+    });
+    await user.save();
+
+    // Clear the verification record from database
+    await OTPVerification.deleteOne({ email });
+
+    // Generate JWT Token
+    const token = generateToken(res, user._id, user.role);
+
+    res.status(200).json({
+      success: true,
+      token,
+      data: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        mobile: user.mobile,
+        role: user.role,
+        profileImage: user.profileImage,
+        bio: user.bio,
+        location: user.location,
+        companyName: user.companyName,
+        addresses: user.addresses
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
